@@ -1,4 +1,3 @@
-import numpy as np
 
 
 def day02a(input_path):
@@ -10,8 +9,9 @@ def day02a(input_path):
             high, _, remainder = remainder.partition(' ')
             high = int(high)
             letter, _, remainder = remainder.partition(':')
-            password = np.array(list(remainder.strip()))
-            if low <= (password == letter).sum() <= high:
+            password = list(remainder.strip())
+            counts = sum([char == letter for char in password])
+            if low <= counts <= high:
                 valid_count += 1
     return valid_count
 
