@@ -17,24 +17,29 @@ def day04a(input_path):
         'ecl',
         'pid',
     }
-    present = set()
-    total = 0
+    passports = []
+    pairs = []
     with open(input_path) as file_obj:
         for line in file_obj:
             line = line.strip()
             if not line:
-                absent = required - present
-                valid = len(absent) == 0
-                total += valid
-                present = set()
+                passports.append(pairs)
+                pairs = []
                 continue
-            pairs = line.split()
-            for pair in pairs:
-                key, _, val = pair.partition(':')
-                present.update([key])
-        absent = required - present
+            pairs += line.split()
+        passports.append(pairs)
+    print('Total passports:', len(passports))
+
+    total = 0
+    for passport in passports:
+        present = []
+        for pair in passport:
+            key, _, val = pair.partition(':')
+            present.append(key)
+        absent = required - set(present)
         valid = len(absent) == 0
         total += valid
+        print(valid, 'total:', total, '# present:', len(present), 'absent:', absent)
     return total
 
 
