@@ -14,6 +14,7 @@ def day04a(input_path):
         'iyr',
         'eyr',
         'hgt',
+        'hcl',
         'ecl',
         'pid',
     }
@@ -39,7 +40,7 @@ def day04a(input_path):
         absent = required - set(present)
         valid = len(absent) == 0
         total += valid
-        print(valid, 'total:', total, '# present:', len(present), 'absent:', absent)
+        # print(valid, 'total:', total, '# present:', len(present), 'absent:', absent)
     return total
 
 
