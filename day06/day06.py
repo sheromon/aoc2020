@@ -6,13 +6,11 @@ def day06a(input_path):
     total = 0
     for response in responses:
         if not response:
-            group_total = len(group_response)
-            total += group_total
+            total += len(group_response)
             group_response = set()
         else:
             group_response |= set(response)
-    group_total = len(group_response)
-    total += group_total
+    total += len(group_response)
     return total
 
 
@@ -26,15 +24,13 @@ def day06b(input_path):
     total = 0
     for response in responses:
         if not response:
-            group_total = len(group_response)
-            total += group_total
+            total += len(group_response)
             group_response = None
         elif group_response is None:
             group_response = set(response)
         else:
             group_response &= set(response)
-    group_total = len(group_response)
-    total += group_total
+    total += len(group_response)
     return total
 
 
