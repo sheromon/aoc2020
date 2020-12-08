@@ -1,13 +1,7 @@
 
 
-def day07a(input_path):
-    rules_dict = get_rules_dict(input_path)
-    holders = []
-    get_holders('shiny gold', rules_dict, holders)
-    return len(holders)
-
-
 def get_rules_dict(input_path):
+    '''Convert raw text list of rules into nested dicts.'''
     rules = [line.strip() for line in open(input_path)]
     rules_dict = dict()
     leftovers = set(['s.', '.'])
@@ -30,18 +24,20 @@ def get_rules_dict(input_path):
     return rules_dict
 
 
+def day07a(input_path):
+    rules_dict = get_rules_dict(input_path)
+    holders = set()
+    get_holders('shiny gold', rules_dict, holders)
+    return len(holders)
+
+
 def get_holders(target, rules_dict, holders):
-    done = True
     for color, contents in rules_dict.items():
         if target in contents.keys():
             if color in holders:
                 continue
-            holders.append(color)
-            done = False
-    if not done:
-        for color in holders:
-            done = get_holders(color, rules_dict, holders)
-    return done
+            holders.add(color)
+            get_holders(color, rules_dict, holders)
 
 
 def test07a():
