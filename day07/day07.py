@@ -4,7 +4,6 @@ def get_rules_dict(input_path):
     '''Convert raw text list of rules into nested dicts.'''
     rules = [line.strip() for line in open(input_path)]
     rules_dict = dict()
-    leftovers = set(['s.', '.'])
     for rule in rules:
         color, _, remainder = rule.partition(' bags contain ')
         remainder = remainder.replace('s,', '')
