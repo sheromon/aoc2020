@@ -22,9 +22,11 @@ class Seating:
         self.max_neighbors = 4
         lines = [list(line.strip()) for line in open(input_path)]
         self.state = np.array(lines)
-
-    def print(self):
-        print(self.state)
+        self.deltas = [  # the eight directions
+            (-1, -1), (-1, 0), (-1, 1),
+            (0, -1), (0, 1),
+            (1, -1), (1, 0), (1, 1),
+        ]
 
     @property
     def total(self):
@@ -43,23 +45,16 @@ class Seating:
         self.state = next_state
 
     def count_occupied(self, row, col):
+        n_rows, n_cols = self.state.shape
         total = 0
-        if row > 0:
-            if col > 0:
-                total += self.state[row-1, col-1] == '#'
-            total += self.state[row-1, col] == '#'
-            if col < self.state.shape[1] - 1:
-                total += self.state[row-1, col+1] == '#'
-        if col > 0:
-            total += self.state[row, col-1] == '#'
-        if col < self.state.shape[1] - 1:
-            total += self.state[row, col+1] == '#'
-        if row < self.state.shape[0] - 1:
-            if col > 0:
-                total += self.state[row+1, col-1] == '#'
-            total += self.state[row+1, col] == '#'
-            if col < self.state.shape[1] - 1:
-                total += self.state[row+1, col+1] == '#'
+        for delta in self.deltas:
+            next_row, next_col = row + delta[0], col + delta[1]
+            val = '.'
+            if (next_row < 0) or (next_col < 0) or (next_row >= n_rows) \
+                or (next_col >= n_cols):
+                continue
+            val = self.state[next_row, next_col]
+            total += (val == '#')
         return total
 
 
@@ -70,25 +65,19 @@ class Seating2(Seating):
         self.max_neighbors = 5
 
     def count_occupied(self, row, col):
-        deltas = [
-            (-1, -1), (-1, 0), (-1, 1),
-            (0, -1), (0, 1),
-            (1, -1), (1, 0), (1, 1),
-        ]
         n_rows, n_cols = self.state.shape
         total = 0
-        for delta in deltas:
+        for delta in self.deltas:
             done = False
             val = '.'
             next_row, next_col = row, col
             while not done:
                 next_row += delta[0]
                 next_col += delta[1]
-                done = (next_row < 0) or (next_col < 0) or (next_row >= n_rows) \
-                    or (next_col >= n_cols)
-                if not done:
-                    val = self.state[next_row, next_col]
-                    done = val != '.'
+                if (next_row < 0) or (next_col < 0) or (next_row >= n_rows) or (next_col >= n_cols):
+                    break
+                val = self.state[next_row, next_col]
+                done = val != '.'
             total += (val == '#')
         return total
 
