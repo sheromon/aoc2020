@@ -22,21 +22,22 @@ def day13b(bus_ids_str=None):
         lines = [line.strip() for line in open(input_path)]
         bus_ids_str = lines[1]
 
-    bus_ids = [(ind, int(val)) for ind, val in enumerate(bus_ids_str.split(',')) if val != 'x']
-    inds, bus_ids = zip(*bus_ids)
-    return check_multiples(bus_ids, inds)
+    bus_id_ind_pairs = [(int(val), ind) for ind, val in enumerate(bus_ids_str.split(',')) if val != 'x']
+    return check_multiples(bus_id_ind_pairs)
 
 
-def check_multiples(bus_ids, inds):
+def check_multiples(bus_id_ind_pairs):
+    interval, _ = bus_id_ind_pairs.pop(0)
     val = 0
-    found = False
-    while not found:
-        val += bus_ids[0]
-        found = True
-        for bid, ind in zip(bus_ids, inds):
-            if (val + ind) % bid != 0:
-                found = False
-                continue
+    while bus_id_ind_pairs:
+        max_id_pair = max(bus_id_ind_pairs)
+        bus_id_ind_pairs.remove(max_id_pair)
+        max_bus_id, max_ind = max_id_pair
+        while True:
+            if (val + max_ind) % max_bus_id == 0:
+                break
+            val += interval
+        interval *= max_bus_id
     return val
 
 
@@ -44,10 +45,10 @@ def test13b():
     assert 3417 == day13b('17,x,13,19')
     assert 754018 == day13b('67,7,59,61')
     assert 1202161486 == day13b('1789,37,47,1889')
-    print('Passed tests!')
+
 
 if __name__ == '__main__':
-    # test13a()
-    # print('Day 13a:', day13a('day13_input.txt'))
+    test13a()
+    print('Day 13a:', day13a('day13_input.txt'))
     test13b()
     print('Day 13b:', day13b())
