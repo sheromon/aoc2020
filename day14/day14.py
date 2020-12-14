@@ -16,6 +16,9 @@ def day14a(input_path):
         _, _, remainder = remainder.partition('=')
         val = int(remainder.strip())
         bits = np.array(int2bin(val))
+        # this was unintentional but pretty cool that it worked.
+        # the ones and zeros in mask are strings, but shoving them into a
+        # numeric array converted them to the right numbers. that's nice.
         bits[mask != 'X'] = mask[mask != 'X']
         memory[address] = bits
 
