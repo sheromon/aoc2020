@@ -3,11 +3,10 @@ import re
 
 def day19a(input_path):
     rules, input_strs = parse_input(input_path)
-    valid_list = []
+    total_valid = 0
     for input_str in input_strs:
-        valid = check_match(input_str, rules, rule_num=0)
-        valid_list.append(valid)
-    return sum(valid_list)
+        total_valid += check_match(input_str, rules, rule_num=0)
+    return total_valid
 
 
 def parse_input(input_path):
@@ -30,24 +29,47 @@ def parse_input(input_path):
     return rules, input_strs
 
 
-def check_match(input_str, rules, rule_num):
-    pattern = '^' + build_pattern(rules, rule_num) + '$'
-    # print(pattern)
+def check_match(input_str, rules, rule_num, max_times=1):
+    pattern = '^' + build_pattern(rules, rule_num, max_times) + '$'
     pattern = re.compile(pattern)
-    return pattern.match(input_str) is not None
+    result = pattern.match(input_str)
+    return result is not None
 
 
-def build_pattern(rules, rule_num):
+def build_pattern(rules, rule_num, max_times=1):
     if isinstance(rules[rule_num], str):
         return rules[rule_num]
+
+    # updated rule 8 simplifies to one or more occurrences of rule 42
+    if rules[rule_num] == [[42], [42, 8]]:
+        pattern = '(?:{})+'.format(
+            build_pattern(rules, 42, max_times),
+        )
+        return pattern
+
+    # updated rule 11 simplifies to one or more occurrences of rule 42 followed
+    # by the same number of occurrences of rule 31
+    if rules[rule_num] == [[42, 31], [42, 11, 31]]:
+        options = []
+        # I don't like this, but I couldn't figure out how to enforce that
+        # the first subgroup and the second subgroup had to repeat the same
+        # number of times in a different way.
+        for times in range(1, max_times):
+            options.append('((?:{}){{{times}}}(?:{}){{{times}}})'.format(
+                build_pattern(rules, 42, max_times),
+                build_pattern(rules, 31, max_times),
+                times=times,
+            ))
+            pattern = '(?:{})'.format('|'.join(options))
+        return pattern
 
     or_patterns = []
     for rule_list in rules[rule_num]:
         pattern = ''
         for next_rule in rule_list:
-            pattern += build_pattern(rules, next_rule)
+            pattern += build_pattern(rules, next_rule, max_times)
         or_patterns.append(pattern)
-    return '({})'.format('|'.join(or_patterns))
+    return '(?:{})'.format('|'.join(or_patterns))
 
 
 def test19a():
@@ -59,15 +81,27 @@ def test19a():
 
 
 def day19b(input_path):
-    pass
+    rules, input_strs = parse_input(input_path)
+    # update rules
+    # 8: 42 | 42 8
+    # 11: 42 31 | 42 11 31
+    rules[8] = [[42], [42, 8]]
+    rules[11] = [[42, 31], [42, 11, 31]]
+
+    total_valid = 0
+    for input_str in input_strs:
+        valid = check_match(input_str, rules, rule_num=0, max_times=20)
+        total_valid += valid
+    return total_valid
 
 
 def test19b():
-    assert 286 == day19b('test_input.txt')
+    assert 3 == day19a('test_input2.txt')
+    assert 12 == day19b('test_input2.txt')
 
 
 if __name__ == '__main__':
     test19a()
     print('Day 19a:', day19a('day19_input.txt'))
-    # test19b()
-    # print('Day 19b:', day19b('day19_input.txt'))
+    test19b()
+    print('Day 19b:', day19b('day19_input.txt'))
