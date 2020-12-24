@@ -1,4 +1,6 @@
 from collections import defaultdict
+import copy
+import numpy as np
 
 
 OPPOSITES = {
@@ -18,6 +20,15 @@ REDUCTIONS = {
     ('ne', 'w'): 'nw',
     ('e', 'sw'): 'se',
 }
+# this is the same as above, just using direction indices instead of strings
+TUPLE_REDUCTIONS = {
+    (5, 3): 1,
+    (2, 4): 0,
+    (1, 4): 3,
+    (5, 0): 2,
+    (2, 1): 5,
+    (0, 3): 4,
+}
 
 
 def day24a(input_path):
@@ -28,12 +39,9 @@ def day24a(input_path):
         tile_def.simplify()
         tile_counts[tile_def.counts] += 1
     num_black = 0
-    count_counts = defaultdict(int)
     for tile, count in tile_counts.items():
         if count % 2:
             num_black += 1
-        count_counts[count] += 1
-    print(count_counts)
     return num_black
 
 
@@ -88,17 +96,99 @@ class TileDef:
         return tuple([self.dirs[key] for key in ALL_DIRS])
 
 
-
 def day24b(input_path):
-    pass
+    lines = [line.strip() for line in open(input_path)]
+    tile_defs = parse_lines(lines)
+    tile_counts = defaultdict(int)
+    for tile_def in tile_defs:
+        tile_def.simplify()
+        tile_counts[tile_def.counts] += 1
+
+    # convert dict of tile counts into status (1: black, 0: white)
+    floor_state = tile_counts
+    current_black = set()
+    current_white = set()
+    for tile, count in floor_state.items():
+        floor_state[tile] = count % 2
+        if count % 2:
+            current_black.add(tile)
+    current_white = set([tile_def.counts for tile_def in tile_defs]) - current_black
+
+    for day in range(100):
+
+        current_white = set()
+        for tile in list(current_black):
+            neighbors = get_neighbors(tile)
+            for neighbor in neighbors:
+                if neighbor not in current_black:
+                    current_white.add(neighbor)
+
+        next_black = copy.copy(current_black)
+        next_white = copy.copy(current_white)
+
+        for tile in list(current_black):
+            neighbors = get_neighbors(tile)
+            total_adj_black = 0
+            for neighbor in neighbors:
+                total_adj_black += (neighbor in current_black)
+            if (total_adj_black == 0) or (total_adj_black > 2):
+                next_white.add(tile)
+                next_black.remove(tile)
+
+        for tile in list(current_white):
+            neighbors = get_neighbors(tile)
+            total_adj_black = 0
+            for neighbor in neighbors:
+                total_adj_black += (neighbor in current_black)
+            if total_adj_black == 2:
+                next_black.add(tile)
+                next_white.remove(tile)
+
+        current_black = next_black
+        current_white = next_white
+        print('Day {}: {}'.format(day + 1, len(current_black)))
+
+    return len(current_black)
+
+
+def get_neighbors(tile):
+    eye = np.eye(6, dtype=np.int32)
+    neighbors = np.array(tile) + eye
+    simplified = [simplify_tuple(n) for n in neighbors.tolist()]
+    return simplified
+
+
+def simplify_tuple(tile):
+    tile = np.array(tile)
+    # cancel out opposites
+    for ind in range(0, 6, 2):
+        min_count = np.min(tile[ind:ind+2])
+        tile[ind:ind+2] -= min_count
+    for ind_pair, reduced_ind in TUPLE_REDUCTIONS.items():
+        min_counts = min(tile[ind_pair[0]], tile[ind_pair[1]])
+        if min_counts:
+            tile[reduced_ind] += min_counts
+            tile[ind_pair[0]] -= min_counts
+            tile[ind_pair[1]] -= min_counts
+    return tuple(tile)
 
 
 def test24b():
+    tile = np.zeros(6, dtype=np.int32)
+    tile[:2] = 1
+    tile = tuple(tile)
+    assert (0, 0, 0, 0, 0, 0) == simplify_tuple(tile)
+
+    tile = np.zeros(6, dtype=np.int32)
+    tile[1:3] = 1
+    tile = tuple(tile)
+    assert (0, 0, 0, 0, 0, 1) == simplify_tuple(tile)
+
     assert 2208 == day24b('test_input.txt')
 
 
 if __name__ == '__main__':
     test24a()
     print('Day 24a:', day24a('day24_input.txt'))
-    # test24b()
-    # print('Day 24b:', day24b('day24_input.txt'))
+    test24b()
+    print('Day 24b:', day24b('day24_input.txt'))
