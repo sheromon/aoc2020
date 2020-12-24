@@ -1,37 +1,73 @@
-import numpy as np
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 
 def day23a(input_str, num_moves=100):
     cups = [int(val) for val in list(input_str)]
 
-    current_ind = 0
-    prev_cups_after_one = None
-    for move in range(num_moves):
-        increment = 1
-        current_label = cups[current_ind]
-        next_three = []
-        next_ind = current_ind + 1
-        for _ in range(3):
-            next_ind = next_ind % len(cups)
-            next_three.append(cups.pop(next_ind))
-            increment -= (next_ind < current_ind)
-        dest_label = current_label - 1
-        while dest_label not in cups:
-            dest_label -= 1
-            if dest_label < min(cups):
-                dest_label = max(cups)
-                break
-        dest_ind = cups.index(dest_label)
-        cups = cups[:dest_ind+1] + next_three + cups[dest_ind+1:]
-        if dest_ind < current_ind:
-            increment += 3
-        current_ind += increment
-        current_ind = current_ind % len(cups)
+    cup_links = make_cup_links(cups)
+    run_game(cup_links, num_moves, cups[0])
 
-    ind = cups.index(1)
-    next_ind = (ind + 1) % len(cups)
-    final_ordering = [str(cup) for cup in cups[next_ind:] + cups[:next_ind-1]]
+    # get all of the cups after 1, and join them into a string
+    cup = 1
+    cups = []
+    for _ in range(len(cup_links) - 1):
+        next_cup = cup_links[cup]
+        cups.append(next_cup)
+        cup = next_cup
+    final_ordering = [str(cup) for cup in cups]
     return ''.join(final_ordering)
+
+
+def make_cup_links(cups):
+    """Reformat list of cups into a dict with cup pointing to next cups."""
+    cup_links = dict()
+    prev_cup = cups[0]
+    for cup in cups[1:]:
+        cup_links[prev_cup] = cup
+        prev_cup = cup
+    cup_links[prev_cup] = cups[0]
+    return cup_links
+
+
+def run_game(cup_links, num_moves, current):
+    """This should be self-explanatory."""
+    num_cups = len(cup_links)
+    for move in range(num_moves):
+        # whoops, can't have this enabled when doing part 2, even if log level
+        # is higher than debug because it still runs the function
+        # logging.debug('cups: %s', get_cup_list(cup_links, current))
+        next_three = []
+        cup = current
+        for _ in range(3):
+            next_cup = cup_links[cup]
+            next_three.append(next_cup)
+            cup = next_cup
+        logging.debug('next three: %s', next_three)
+        dest_cup = (current - 2) % num_cups + 1
+        while dest_cup in next_three:
+            dest_cup -= 1
+            dest_cup = (dest_cup - 1) % num_cups + 1
+        logging.debug('destination: %s', dest_cup)
+        logging.debug('')
+        cup_links[current] = cup_links[next_cup]
+        cup_links[next_three[-1]] = cup_links[dest_cup]
+        cup_links[dest_cup] = next_three[0]
+        current = cup_links[current]
+        if move % 100000 == 0:
+            logging.info('move %d, completion %.2f', move, move/10000000)
+
+
+def get_cup_list(cup_links, starting_cup):
+    """Make the full list of cups for debugging purposes."""
+    cup = starting_cup
+    cups = [starting_cup]
+    for _ in range(len(cup_links) - 1):
+        next_cup = cup_links[cup]
+        cups.append(next_cup)
+        cup = next_cup
+    return cups
 
 
 def test23a():
@@ -39,15 +75,29 @@ def test23a():
 
 
 def day23b(input_str, num_moves=10000000, num_cups=1000000):
-    pass
+    cups = [int(val) for val in list(input_str)]
+    remaining_cups = list(range(len(cups) + 1, num_cups + 1))
+    cups = cups + remaining_cups
+
+    cup_links = make_cup_links(cups)
+    run_game(cup_links, num_moves, cups[0])
+
+    # return the product of the two cups after 1
+    cup = 1
+    product = 1
+    for _ in range(2):
+        next_cup = cup_links[cup]
+        product *= next_cup
+        cup = next_cup
+    return product
 
 
 def test23b():
-    assert 149245887792 == day23b('389125467', 10, 100)
+    assert 149245887792 == day23b('389125467')
 
 
 if __name__ == '__main__':
     test23a()
     print('Day 23a:', day23a('362981754'))
-    # test23b()
-    # print('Day 23b:', day23b('362981754'))
+    test23b()
+    print('Day 23b:', day23b('362981754'))
